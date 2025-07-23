@@ -5,22 +5,52 @@ import ProgressBar from './components/ProgressBar';
 import AudioLibrary from './components/AudioLibrary';
 import apiService from './services/api';
 
+interface Voice {
+  Id: string;
+  Name: string;
+  Gender: string;
+  LanguageCode: string;
+}
+
+interface LibraryEntry {
+  id: string;
+  fileName: string;
+  uploadDate: string;
+  totalItems: number;
+  processedItems: number;
+  failedItems: number;
+  voice: string;
+  results: any[];
+}
+
+interface ProgressResponse {
+  status: string;
+  progress: number;
+  total: number;
+  completed: number;
+  current: string | null;
+  startTime: string;
+  endTime?: string;
+  error?: string;
+  libraryId?: string;
+}
+
 function App() {
-  const [voices, setVoices] = useState([]);
-  const [libraries, setLibraries] = useState([]);
-  const [currentJobId, setCurrentJobId] = useState(null);
-  const [progress, setProgress] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [fallbackMode, setFallbackMode] = useState(false);
-  const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('upload');
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [libraries, setLibraries] = useState<LibraryEntry[]>([]);
+  const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [progress, setProgress] = useState<ProgressResponse | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [fallbackMode, setFallbackMode] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'upload' | 'library'>('upload');
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout;
     
     if (currentJobId && progress?.status && !['completed', 'failed'].includes(progress.status)) {
       interval = setInterval(async () => {
@@ -89,7 +119,7 @@ function App() {
     }
   };
 
-  const handleFileUpload = async (file, voice) => {
+  const handleFileUpload = async (file: File, voice: string) => {
     try {
       setIsUploading(true);
       setError(null);
@@ -101,18 +131,18 @@ function App() {
       const initialProgress = await apiService.getProgress(response.jobId);
       setProgress(initialProgress);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
       setError(error.message || 'Upload failed. Please try again.');
       setIsUploading(false);
     }
   };
 
-  const handleDeleteLibrary = async (id) => {
+  const handleDeleteLibrary = async (id: string) => {
     try {
       await apiService.deleteLibraryEntry(id);
       loadLibrary(); // Refresh library
-    } catch (error) {
+    } catch (error: any) {
       console.error('Delete error:', error);
       setError(error.message || 'Failed to delete library entry.');
     }
